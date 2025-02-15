@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tạo phụ đề, dịch phụ đề và gửi thông báo đến FrontEnd khi hoàn tất on AWS System Manager</title>
+    <link>http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/</link>
+    <description>Recent content in Tạo phụ đề, dịch phụ đề và gửi thông báo đến FrontEnd khi hoàn tất on AWS System Manager</description>
+    <generator>Hugo</generator>
+    <language>vi</language>
+    <atom:link href="http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/index.xml" rel="self" type="application/rss+xml" />
+  </channel>
+</rss>

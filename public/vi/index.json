@@ -1,0 +1,197 @@
+[
+{
+	"uri": "http://localhost:1313/vi/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/4.1-set-up-a-lambda-function-to-create-presigned-urls/",
+	"title": "Cài đặt Lambda",
+	"tags": [],
+	"description": "",
+	"content": "Để upload video vào s3, trong workshop này sẽ sử dụng Lambda để thực hiện upload video vào S3 bằng presigned URLs.\nPresigned URL là URL mà bạn có thể cung cấp cho người dùng của mình để cấp quyền truy cập tạm thời vào một đối tượng S3 cụ thể. Sử dụng URL, người dùng có thể đọc và ghi đối tượng (hoặc cập nhật đối tượng hiện có). URL chứa các thông số cụ thể do ứng dụng mà bạn cài đặt. Presigned URL sử dụng ba tham số để giới hạn quyền truy cập cho người dùng:\nBucket: Chứa các đối tượng - nơi đối tượng nằm trong đây. Key: Tên của đối tượng. Expires: thời hạn có hiệu lực của URL. Sử dụng Lambda để tạo ra Presigned URL. Và ta sử dụng đơn luôn để tải nên giới hạn khích thức sẽ là 5GB\nNgoài ra có thể tải video lên một cách nhanh hơn là dùng multiupload kết hợp với presigned URLs. Thì video được tải lên sẽ được chia thành các phần nhỏ để tải lên.\nNội dung: Tạo Lambda Function "
+},
+{
+	"uri": "http://localhost:1313/vi/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/4.1-set-up-a-lambda-function-to-create-presigned-urls/4.1.1-create-lambda-function/",
+	"title": "Cài đặt Lambda tải lên video",
+	"tags": [],
+	"description": "",
+	"content": "Bước này ta sẽ tạo một lambda để thực hiện sinh ra presigned URL.\nTạo Lambda Truy cập Bảng điều khiển AWS Lambda và chọn Tạo function.\nĐiền thông tin như bên dưới:\nBạn có thế chọn ngôn ngữ khác nếu không quen với Python. Chọn kiến trúc arm 64 để được các nhiều hổ trợ hơn.\nChọn role đã tạo ở trước đó Role-ws-2024.\nChọn Create function\nĐã tạo xong function tiến hành code để thực hiện tạo url upload video.\nDán đoan code sau và ấn Deloy để triển khai code Lambda.\nimport json import boto3 import os s3 = boto3.client(\u0026#39;s3\u0026#39;) def lambda_handler(event, context): bucket_name = \u0026#39;upload-object-ws-2024\u0026#39; folder_name = \u0026#39;Video\u0026#39; file_name = event.get(\u0026#39;fileName\u0026#39;, \u0026#39;video-default.mp4\u0026#39;) file_type = \u0026#39;video/mp4\u0026#39; s3_key = f\u0026#34;{folder_name}/{file_name}\u0026#34; try: s3.delete_object(Bucket=bucket_name, Key=s3_key) presigned_url = s3.generate_presigned_url(\u0026#39;put_object\u0026#39;, Params={ \u0026#39;Bucket\u0026#39;: bucket_name, \u0026#39;Key\u0026#39;: s3_key, \u0026#39;ContentType\u0026#39;: file_type }, ExpiresIn=300) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps({ \u0026#39;uploadURL\u0026#39;: presigned_url, \u0026#39;message\u0026#39;: \u0026#39;Pre-signed URL generated successfully\u0026#39; }) } except s3.exceptions.NoSuchKey: presigned_url = s3.generate_presigned_url(\u0026#39;put_object\u0026#39;, Params={ \u0026#39;Bucket\u0026#39;: bucket_name, \u0026#39;Key\u0026#39;: s3_key, \u0026#39;ContentType\u0026#39;: file_type }, ExpiresIn=300) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps({ \u0026#39;uploadURL\u0026#39;: presigned_url, \u0026#39;message\u0026#39;: \u0026#39;File not found, pre-signed URL generated successfully\u0026#39; }) } except Exception as e: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps({ \u0026#39;message\u0026#39;: \u0026#39;Error generating pre-signed URL\u0026#39;, \u0026#39;error\u0026#39;: str(e) }) } Tạo function url, ở đây bạn có thể thay thế bằng cách dùng API để frontend gọi đến. Còn với workshop này thì sẽ sử dụng luôn function url để frontend gọi.\nCó thể tìm hiểu thêm về Function URL: Chọn NONE để Lambda sẽ không thực hiện xác thực IAM đối với các yêu cầu tới URL chức năng của bạn. Điểm cuối URL sẽ được công khai trừ khi bạn triển khai logic ủy quyền của riêng mình trong hàm của mình.\nChọn BUFFERED sẽ giới hạn khích thước file tải lên là 6MB\nChọn Save\nSau khi đã có url của Lambda thì frontend có thể gọi đến lambda để lấy presigned URL và tiến hành upload.\nVới Lambda khi thực hiện việc upload video có thể xảy ra time out. Vì thế sẽ thực hiện cài đặt lại time out cho lambda.\n3s là thời gian time out mặc định của Lambda và 15m là time out lớn nhất có thể cài đặt cho lambda. Thêm nữa Memory mặc định là 128MB và Storage mặc định là 512MB. Có thể cái đặt cho memory và storage.\nCài đặt time out.\nChọn Save\nViệc sử dụng Lambda phù hợp cho công việc nhẹ không quá nặng vì sẽ dễ dẫn đến timeout do thời gian timeout của Lambda Function giới hạn 15 phút. Vì thế nếu sử dụng bạn cần tới ưu thêm để phù hợp với Lambda Function.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/3-setup-s3/3.1-setup-s3-static-web/",
+	"title": "Cài đặt S3 cho trang web tĩnh",
+	"tags": [],
+	"description": "",
+	"content": "Tạo Bucket S3 Truy cập đến bảng điều khiển S3 và tạo Bucket mới tên web-translate-ws-2024\nChọn ACLs enable và tích Object write để public các object trong bucket.\nBỏ tích Block all public access, tích I acknowledge that the current settings might result in this bucket and the objects within becoming public. để có thể cho phép các nguồn khác có thể truy cập đến S3\nChọn Create bucket\nTiếp theo sẽ cấu hình policy cho S3. Chọn Bucket vừa tạo vào vào Premissions.\nĐến Bucket policy để cấu hình policy Bucket.\nCấu hình policy cho bucket bằng tình năng Policy generator.\nAWS Policy Generator là công cụ cho phép bạn tạo chính sách kiểm soát quyền truy cập vào các sản phẩm và tài nguyên của Amazon Web Services (AWS).\nTrước khi chọn Policy generator, thì cần copy Bucket ARN\nĐể tạo policy cho bucket thì phần Step 1, sẽ chọn vào S3 Bucket Policy, ngoài ra có thể tạo các policy cho SQS, VPC, IAM và SNS tuy vào từng loại server mà ta cần thực hiện.\nỞ Step2 - Principal ta để giá trị là * cho phép tất cả nguồn truy cập đến bucket.\nKiểm tra xem đã chọn đủ các hành động có thể thực hiện với bucket này, đúng bucket arn.\nSau khi chọn Generate Policy sẽ được đoạn mã json policy và copy đoạn mã này.\nDán đoạn mã vừa được tạo vào Policy.\nỞ cuối đừng dẫn trong Resource thêm /* để cho phép truy cập đến các object trong bucket.\nChọn Save changes\nUpload file code trang web lên bucket, chọn upload và chọn file để upload lên và cuối cùng là bấm Upload.\nTải 2 file code:\nindex.html\nvideo-player.html\nTạo static website hosting vào Properties sau đó đến Static website hosting.\nCấu hình static website hosting.\nPhần Index document để tên file bạn muốn hiện thị gian diện đầu tiên, hay có thể như là trang chủ. Để đúng tên với file đã upload lên Bucket. Error document nếu bạn code file để hiện lỗi trang web thì có thể upload lên và để tên của file đó, ở đây do không có file hiện lỗi ở giao diện ên có thể để tên file như của Index document.\nChọn Save changes\nVậy đã xong và sẽ có đừng link đến trang web.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/1-introduce/1.1-flow-explaination/",
+	"title": "Giải thích luồng",
+	"tags": [],
+	"description": "",
+	"content": "Giải thích luồng chạy hệ thống Trong hình bên dưới, đây là kiến trúc và luồng vận hành. Đầu tiến người dùng sẽ truy cập vào website tĩnh được lưu và host trong s3. Khi người dùng thực hiện hành động upload video lên sẽ gọi đến Lambda Function(Upload Video) để thực hiện việc upload video vào trong S3 để lưu trữ. Có một đối tượng được thêm vào S3 hoàn thành. SNS phát thông báo đén các dịch vụ khác trong hệ thống, ở đây làm Lambda Function(Call Step Function) điều này khích hoạt các quy trình xử lý tiếp theo một cách tự động. Khi Lambda Function(Call Step Function) được khích hoạt trigger là SNS thì sẽ thực hiện việc gọi đến Step Function để thực hiện luồng công việc từ tạo phụ đề từ việc trích video lấy phụ đề và thực hiện dịch phụ đề đó. Chi tiết luồng công việc trong Step Function sẽ diễn ra như sau:\nĐầu tiên sẽ gọi Lambda Function(Create job Transcribe), lambda function sẽ thực hiện việc lấy vidoe đã được người dùng tải vào S3 ban đầu sau đó tiến hành khởi tạo công việc của Transcribe là cấu hình TranscriptionJobName, Media(là video được lưu trong s3), MediaFormat(định dạng của viddeo), LanguageCode(Ngôn ngữ của video), Subtitles(định dạng file phụ đề .vtt), OutputBucketName. Kế tiếp là Trancribe tiến hành thực hiện công việc đã được tạo, lưu file kết quả vào S3. Tiếp theo sau khi đã hoàn thành việc tạo phụ đề thì bước kế tiếp là gọi đến Lambda Function(Create job Translate from video subtitles) để thực hiện lấy file phụ đề của video vừa được tạo và khởi tạo công việc cho Translate. Sau đó Translate sẽ thực hiện công việc được tạo và lưu file kết quả vào S3. Cuối cùng khi các công việc chính đã hoàn thành thì sẽ gọi Lambda Function cuối cùng để gợi API Gateway để gửi thông báo đã hoàn thành xong phụ đề để phía fronted thực hiện phát video có kèm phụ đã được xử lý. "
+},
+{
+	"uri": "http://localhost:1313/vi/1-introduce/",
+	"title": "Giới thiệu",
+	"tags": [],
+	"description": "",
+	"content": "AWS Transcribe Amazon Transcribe là dịch vụ nhận dạng giọng nói tự động (ASR) được quản lý toàn phần giúp các nhà phát triển dễ dàng thêm khả năng chuyển lời nói thành văn bản vào ứng dụng của họ. Dịch vụ này được hỗ trợ bởi mô hình nền tảng giọng nói thế hệ tiếp theo gồm nhiều tỷ tham số, mang lại bản chép lời có độ chính xác cao để truyền trực tuyến và ghi lại lời nói. Hàng nghìn khách hàng ở đủ mọi ngành sử dụng dịch vụ này để tự động hóa các tác vụ thủ công, mở ra những hiểu biết sâu sắc, tăng khả năng truy cập cũng như tăng cường khả năng khám phá nội dung âm thanh và video.\nAWS Translate Amazon Translate là dịch vụ máy dịch ứng dụng mạng nơron để cung cấp bản dịch ngôn ngữ nhanh chóng, chất lượng cao, có thể tùy chỉnh.\nAWS Step Function Step Functions là dịch vụ quy trình làm việc trực quan giúp nhà phát triển sử dụng các dịch vụ AWS để xây dựng ứng dụng phân tán, tự động hóa các quy trình, điều phối các vi dịch vụ, đồng thời tạo ra quy trình dữ liệu và máy học (ML).\nKiến trúc của Workshop "
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.1-lambda-function-initializes-transcribe-job/5.1.1-setup-lambda-function-transcribe-job/",
+	"title": "Lambda Transcribe",
+	"tags": [],
+	"description": "",
+	"content": "Tạo Lambda Thực hiện tạo function.\nNhập các thông tin như hình:\nChọn Create function\nDán đoạn code sau:\nimport json import boto3 import time s3 = boto3.client(\u0026#39;s3\u0026#39;) transcribe = boto3.client(\u0026#39;transcribe\u0026#39;) def lambda_handler(event, context): bucket_name = \u0026#39;upload-object-ws-2024\u0026#39; video_key = \u0026#39;Video/video-default.mp4\u0026#39; output_bucket = \u0026#39;ws-file-sub-video\u0026#39; job_name = \u0026#34;subtitle\u0026#34; media_uri = f\u0026#34;s3://{bucket_name}/{video_key}\u0026#34; try: response = s3.list_objects_v2(Bucket=output_bucket) if \u0026#39;Contents\u0026#39; in response: delete_keys = [{\u0026#39;Key\u0026#39;: obj[\u0026#39;Key\u0026#39;]} for obj in response[\u0026#39;Contents\u0026#39;]] s3.delete_objects( Bucket=output_bucket, Delete={ \u0026#39;Objects\u0026#39;: delete_keys, \u0026#39;Quiet\u0026#39;: True } ) except Exception as e: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps(f\u0026#39;Error deleting old files: {str(e)}\u0026#39;) } try: s3.delete_objects(Bucket=\u0026#39;ws-translate\u0026#39;, Delete={\u0026#39;Objects\u0026#39;: [{\u0026#39;Key\u0026#39;: \u0026#39;translated_subtitle.vtt\u0026#39;}]}) except Exception as e: print(f\u0026#34;Error deleting old file: {e}\u0026#34;) response = transcribe.start_transcription_job( TranscriptionJobName=job_name, Media={\u0026#39;MediaFileUri\u0026#39;: media_uri}, MediaFormat=\u0026#39;mp4\u0026#39;, LanguageCode=\u0026#39;en-US\u0026#39;, Subtitles={\u0026#39;Formats\u0026#39;: [\u0026#39;vtt\u0026#39;]}, OutputBucketName=output_bucket ) while True: job = transcribe.get_transcription_job(TranscriptionJobName=job_name) if job[\u0026#39;TranscriptionJob\u0026#39;][\u0026#39;TranscriptionJobStatus\u0026#39;] in [\u0026#39;COMPLETED\u0026#39;, \u0026#39;FAILED\u0026#39;]: break time.sleep(5) if job[\u0026#39;TranscriptionJob\u0026#39;][\u0026#39;TranscriptionJobStatus\u0026#39;] == \u0026#39;COMPLETED\u0026#39;: transcribe.delete_transcription_job(TranscriptionJobName=job_name) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Transcription completed successfully and job deleted!\u0026#39;) } else: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Transcription failed!\u0026#39;) } Cuối cùng chọn Deloy\nĐã hoàn thành tạo lambda function để tạo Transcribe job.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.2-lambda-function-initializes-translate-job/5.2.1-setup-lambda-function-translate-job/",
+	"title": "Lambda Translate",
+	"tags": [],
+	"description": "",
+	"content": "Tạo Lambda Thực hiện tạo function.\nNhập các thông tin như hình:\nChọn Create function\nDán đoạn code sau:\nimport json import boto3 s3_client = boto3.client(\u0026#39;s3\u0026#39;) translate_client = boto3.client(\u0026#39;translate\u0026#39;) def lambda_handler(event, context): source_bucket = \u0026#39;ws-file-sub-video\u0026#39; source_key = \u0026#39;subtitle.vtt\u0026#39; destination_bucket = \u0026#39;ws-translate\u0026#39; destination_key = \u0026#39;translated_subtitle.vtt\u0026#39; vtt_file = s3_client.get_object(Bucket=source_bucket, Key=source_key) vtt_content = vtt_file[\u0026#39;Body\u0026#39;].read().decode(\u0026#39;utf-8\u0026#39;) txt_content = convert_vtt_to_txt(vtt_content) translated_text = translate_text(txt_content, \u0026#39;en\u0026#39;, \u0026#39;vi\u0026#39;) s3_client.put_object( Bucket=destination_bucket, Key=destination_key, Body=translated_text ) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Translation complete and uploaded to S3!\u0026#39;) } def convert_vtt_to_txt(vtt_content): lines = vtt_content.splitlines() txt_content = [] for line in lines: txt_content.append(line.strip()) return \u0026#39;\\n\u0026#39;.join(txt_content) def translate_text(text, source_lang, target_lang): response = translate_client.translate_text( Text=text, SourceLanguageCode=source_lang, TargetLanguageCode=target_lang ) return response[\u0026#39;TranslatedText\u0026#39;] Cuối cùng chọn Deloy\nĐã hoàn thành tạo lambda function để tạo Translate job.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/2-preparation/2.1-createiamrole/",
+	"title": "Tạo IAM Role",
+	"tags": [],
+	"description": "",
+	"content": "Tạo Role Truy cập vào IAM và tạo Role\nChọn service cần dùng\nGán policy của Lambda cho role, chọn policy với đầy đủ các của Lambda.\nGán policy của S3 cho role, chọn policy với đầy đủ các quyền của S3.\nGán policy của API GateWay cho role, chọn policy với đầy đủ các quyền của API GateWay.\nGán policy của SNS cho role.\nGán policy của Transcribe cho role.\nGán policy của Translate cho role.\nNhận tên role Role-ws-2024.\nKiểm tra lại policy của các service cần đã đủ chưa. Nếu đủ thì hoàn thành tạo Role.\nKhi muốn gán thêm policy cho role đã tạo thì chọn role cần gán policy.\nGán thêm policy.\nChọn policy Step Function.\nTạo Role và gán các policy của service cho role đã hoàn thành.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.3-lambda-function-send-notification-to-frontend/5.3.1-setup-lambda-function-notify-frontend/",
+	"title": "Tạo Lambda Notify",
+	"tags": [],
+	"description": "",
+	"content": "Tạo Lambda Thực hiện tạo function.\nNhập các thông tin như hình:\nCreate function\nDán đoạn code sau:\nimport json import http.client def lambda_handler(event, context): api_url = \u0026#34;axwqwuuq1f.execute-api.us-east-1.amazonaws.com\u0026#34; resource = \u0026#34;/dev/notify\u0026#34; payload = json.dumps({\u0026#34;status\u0026#34;: \u0026#34;completed\u0026#34;}) headers = { \u0026#39;Content-Type\u0026#39;: \u0026#39;application/json\u0026#39; } try: conn = http.client.HTTPSConnection(api_url) conn.request(\u0026#34;POST\u0026#34;, resource, payload, headers) response = conn.getresponse() data = response.read() if response.status == 200: return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps({\u0026#39;status\u0026#39;: \u0026#39;completed\u0026#39;, \u0026#39;message\u0026#39;: \u0026#39;Notification sent!\u0026#39;}) } else: return { \u0026#39;statusCode\u0026#39;: response.status, \u0026#39;body\u0026#39;: json.dumps({\u0026#39;status\u0026#39;: \u0026#39;failed\u0026#39;, \u0026#39;message\u0026#39;: \u0026#39;Failed to send notification\u0026#39;}) } except Exception as e: print(f\u0026#34;Error sending notification: {e}\u0026#34;) return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps({\u0026#39;status\u0026#39;: \u0026#39;error\u0026#39;, \u0026#39;message\u0026#39;: \u0026#39;Failed to send notification\u0026#39;}) } Deloy\nĐã hoàn thành tạo lambda function để tạo thông báo đến frontend.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/",
+	"title": "Tạo phụ đề và dịch phụ đề cho video với AWS Transcribe và AWS Translate",
+	"tags": [],
+	"description": "",
+	"content": "Tổng quan Khi xem một video bằng ngôn ngữ không quen thuộc hoặc không biết ngôn ngữ đó, bạn sẽ cần có phụ đề được dịch sang ngôn ngữ mà bạn hiểu. Đáp ứng nhu cầu này, chúng ta sẽ sử dụng kết hợp các dịch vụ mà AWS cung cấp để thực hiện việc tạo phụ đề và dịch phụ đề cho video. Sau cùng sẽ có được một video kèm theo phụ đề đã được dịch sang một ngôn ngữ quen thuộc giúp cho việc xem và hiểu nội dung của video dễ dàng hơn.\nMục tiêu của Workshop hướng đến Từ một video tiếng Anh và không có phụ đề, sau khi được xử lý để trích xuất phụ đề và dịch phụ đề sang tiếng Việt, kết thúc quá trình, chúng ta sẽ có một video hoàn chỉnh bằng tiếng Việt.\nHạn chế của Worrkshop Tuy nhiên với Workshop này vẫn còn nhược điểm mà sau khi thực hiện Workshop sẽ thấy được là:\nQuá trình upload video lên s3 chưa được tối ưu tốt, dẫn đến việc upload video diễn ra lâu và với video có thời lướng lớn thì quá trình này diễn ra lâu hơn nữa. Nhận diện ngôn ngữ của video còn hạn chế, chỉ có video với ngôn ngữ tiếng anh. Dịch phụ đề chỉ có từ tiếng anh sang tiếng việt. Hướng phát triển và cải tiến Workshop Tối ưu hoá quá trình upload video Hỗ trợ phụ đề và dịch phụ đề đa ngôn ngữ. Nội dung Giới thiệu. Các bước chuẩn bị. Cài đặt S3. Tải video lên S3 và thông báo hoàn tất. Tạo phụ đề, dịch và gửi thông báo. Chạy thử trang web. Xoá tài nguyên. "
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.1-lambda-function-initializes-transcribe-job/",
+	"title": "Transcribe",
+	"tags": [],
+	"description": "",
+	"content": "Sử dụng Lambda Function để tạo Transcribe job với AWS Transcribe sẽ cũng cấp hai định dạng fiel sub cho video là SRT và VTT (WebVTT). Với workshop này sẽ sử dụng định dạng VTT.\nVTT là định dạng sau: 00:00:00.469 \u0026ndash;\u0026gt; 00:00:02.880 The BMW crew is the world leading\nĐồng thời sử dụng Lambda Function để thực hiện xoá Transcribe job khi đã thực hiện xong.\nNội dung: Tạo Lambda Function "
+},
+{
+	"uri": "http://localhost:1313/vi/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/4.2-setup-sns/",
+	"title": "Cài đặt SNS",
+	"tags": [],
+	"description": "",
+	"content": "Với SNS sử dụng để gửi thông báo khi có video mới được tải lên S3. SNS phát thông báo tới các dịch vụ khác trong hệ thống (trong wrkshop là lambda), đảm bảo rằng tất cả các thành phần liên quan đều được thông báo về sự kiện mới. Điều này kích hoạt quy trình xử lý video một cách tự động và kịp thời.\nTạo SNS Đi tới Bảng điều khiển Amazon SNS và nhập tên chủ đề video-procesing-topic, sau đó chọn Next step.\nChọn Standard, sau đó chọn Create topic.\nVào SNS vừa tạo chọn edit\nCài đặt policy Thêm dấu phẩy sau giấu ngoặc nhọn được khoanh vùng để thêm đoạn code policy khác.\ndán đoạn code sau:\n{ \u0026#34;Sid\u0026#34;: \u0026#34;S3 notification to SNS\u0026#34;, \u0026#34;Effect\u0026#34;: \u0026#34;Allow\u0026#34;, \u0026#34;Principal\u0026#34;: { \u0026#34;Service\u0026#34;: \u0026#34;s3.amazonaws.com\u0026#34; }, \u0026#34;Action\u0026#34;: \u0026#34;sns:Publish\u0026#34;, \u0026#34;Resource\u0026#34;: \u0026#34;\u0026lt;ARN of the Topic\u0026gt;\u0026#34;, \u0026#34;Condition\u0026#34;: { \u0026#34;ArnLike\u0026#34;: { \u0026#34;AWS:SourceArn\u0026#34;: \u0026#34;\u0026lt;ARN of the S3 Bucket\u0026gt;\u0026#34; } } } ARN of the Topic thay bằng ARN của SNS đang cấu hình.\nARN of the S3 Bucket thay bằng ARN của bucket đầu vào là bucket chứa file video được upload.\nChọn Save change\nĐể SNS có thể biết có một object được lưu vào bucket thì sẽ phải cài đặt thêm ở bucket đầu vào.\nĐến bucket đầu vào upload-object-ws-2024. Chọn Properties.\nĐiền thông tin như sau:\nCuối cùng chọn Save changes\n"
+},
+{
+	"uri": "http://localhost:1313/vi/2-preparation/",
+	"title": "Chuẩn bị",
+	"tags": [],
+	"description": "",
+	"content": "Trước tiên cần tạo IAM Role.\nYou need an AWS account to do this and it\u0026rsquo;s best to create an IAM User account to do this, avoid doing it on a root account.\nIAM Role là tính năng giúp nâng cao tính bảo mật trên AWS. Một IAM Role có thể được gán tạm thời cho các IAM User và các tài nguyên AWS trong nội bộ (internal) hoặc bên ngoài (external) tài khoản của bạn.\nNội dung Tạo IAM Role "
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.3-lambda-function-send-notification-to-frontend/5.3.2-setup-api-gateway/",
+	"title": "Tạo API GateWay",
+	"tags": [],
+	"description": "",
+	"content": "Đến trang điều khiển của API gateway chọn create API\nSử dụng Rest API (public).\nNhận thông tin như sau:\nTạo resource.\n/ là thư mục gốc sẽ tạo các resouce trong đây.\nNhập Resource name notify.\nTạo Method.\nChọn đúng Lambda thực hiện thông báo đến frontend.\nBật CORS.\nChọn vào resource chứa method vừa tạo đề bật CORS.\nChọn các trường giá trị.\nTriển khai API với tên tuỳ chọn: dev.\nLấy url API.\nVới Url này sẽ dán vào phần giá trị api_url trong code của Lambda-Notify.Và đồng thời cấp API cho frontend.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/3-setup-s3/3.2-setup-s3-store-video-file/",
+	"title": "Thiết lập S3 để lưu tệp video",
+	"tags": [],
+	"description": "",
+	"content": "Tạo Bucket Tạo Bucket để lưu file các bước đầu giống với Tạo Bucket để lưu file code của web, tuy nhiêu sẽ không cấu hình Static website hosting.\nĐể quản lý file Video được gọn hơn thì, ta sẽ tao một floder trong bucket.\nTạo floder với tên Video\nChọn Create folder\nDo các object của bucket này sẽ được truy cập trông qua lambda và api nên cần cấu hình thêm CORS.\nCross-origin resource sharing (CORS) xác định cách để các ứng dụng web của khách hàng được tải trong một miền tương tác với các tài nguyên trong một miền khác. CORS\nDán đoạn code sau:\n[ { \u0026#34;AllowedHeaders\u0026#34;: [ \u0026#34;*\u0026#34; ], \u0026#34;AllowedMethods\u0026#34;: [ \u0026#34;PUT\u0026#34;, \u0026#34;GET\u0026#34;, \u0026#34;DELETE\u0026#34; ], \u0026#34;AllowedOrigins\u0026#34;: [ \u0026#34;*\u0026#34; ], \u0026#34;ExposeHeaders\u0026#34;: [ \u0026#34;ETag\u0026#34; ] } ] \u0026ldquo;AllowedHeaders\u0026rdquo;: [ \u0026ldquo;\u0026rdquo; ]* là danh sách các tiêu đề HTTP mà trình duyệt có thể gửi trong một yêu cầu từ các nguồn khác (cross-origin request). Dấu * cho phép tất cả các tiêu đề HTTP\n\u0026ldquo;AllowedMethods\u0026rdquo;: [\u0026ldquo;PUT\u0026rdquo;, \u0026ldquo;GET\u0026rdquo;, \u0026ldquo;DELETE\u0026rdquo;] là danh sách các phương thức HTTP được phép khi gửi yêu cầu đến S3 từ các nguồn khác.\n\u0026ldquo;AllowedOrigins\u0026rdquo;: [ \u0026ldquo;\u0026rdquo; ]* là danh sách các nguồn (origin) được phép truy cập vào S3 bucket. Dấu * có nghĩa là mọi nguồn gốc đều được phép truy cập, tức là cho phép tất cả các trang web từ bất kỳ domain nào thực hiện yêu cầu đến S3 bucket.\n\u0026ldquo;ExposeHeaders\u0026rdquo;: [\u0026ldquo;ETag\u0026rdquo;] là danh sách các tiêu đề HTTP mà trình duyệt có thể truy cập từ phản hồi của S3. ETag là một tiêu đề HTTP cho phép trình duyệt biết phiên bản của một tệp, thường được sử dụng để xác định sự thay đổi của tài nguyên.\nCuối cùng chọn Save changes\n"
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.2-lambda-function-initializes-translate-job/",
+	"title": "Translate",
+	"tags": [],
+	"description": "",
+	"content": "Sử dụng Lambda để gọi AWS Translate thực hiện dịch phụ đề được lấy trong bucket ws-file-sub-video. Và AWS Translate dịch file tối đã là 20MB với định dạng text (.txt), HTML (.html), Word (.docx), Excel (.xlsx), PowerPoint (.pptx) and XLIFF 1.2 (.xlf) và hỗ trợ tối đa 1,000,000 file cùng một đợt. Amazon Translate cung cấp nội dung đầu ra dưới dạng tệp. Định dạng tệp cho mỗi tệp đầu ra khớp với định dạng tệp đầu vào. Tuy nhiên khi sử dụng làm phụ đề cho video được đơn giản hơn thì có thể dùng lambda để chuyển đổi định dạng file đầu ra của Amazon Translate thành định dạng .vtt đồng đợi là cũng chuyển đổi định dạng file phụ đề từ .vtt sang .txt để đúng định dạng đầu vào của Amazon Translate.\nWorkshop này sẽ thực hiện dịch từ ngôn ngữ tiếng anh sang tiếng việt.\nNội dung: Tạo Lambda Function "
+},
+{
+	"uri": "http://localhost:1313/vi/3-setup-s3/",
+	"title": "Cài đặt S3",
+	"tags": [],
+	"description": "",
+	"content": "Trong bước này, chúng ta sẽ thực hiện cài đặt s3 để lưu trữ các file, và lưu trữ code đồng thới cài đặt host static web ở S3\nNội dung Cài đặt S3 để lưu code trang web và làm host cho trang web tĩnh Cài đặt S3 lưu video tải lên Cài đặt S3 lưu các file phụ đề của video Cài đặt S3 lư file phụ đề đã được dịch "
+},
+{
+	"uri": "http://localhost:1313/vi/3-setup-s3/3.3-setup-s3-store-sub-file/",
+	"title": "Cài đặt S3 lưu các file phụ đề của video",
+	"tags": [],
+	"description": "",
+	"content": "Tạo bucket Tạo bucket lưu các file phụ đề được tạo ra từ AWS Transcribe\nCấu hình Policy bucket\nCấu hình CORS\n"
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.3-lambda-function-send-notification-to-frontend/",
+	"title": "Thông báo cho frontend",
+	"tags": [],
+	"description": "",
+	"content": "Khi các công việc thực hiện đã hoàn thành thì từ phía backend sẽ gửi thông báo cho frontend để fronted thực hiện công việc tiếp theo. Sử dụng kết hợp API Gateway và Lambda thực hiện nhiệm vụ này.\nNội dung: Lambda Notify\nCài đặt API Gateway\n"
+},
+{
+	"uri": "http://localhost:1313/vi/3-setup-s3/3.4-setup-s3-store-sub-trans-file/",
+	"title": "Cài đặt S3 lưu file phụ đề đã được dịch",
+	"tags": [],
+	"description": "",
+	"content": "Tạo bucket Tạo bucket lưu file phụ đề đã được dịch từ AWS Translate\nCấu hình Policy bucket\nCấu hình CORS\n"
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.4-assemble-the-components-of-a-workflow-with-step-function/",
+	"title": "Cài đặt Step Function",
+	"tags": [],
+	"description": "",
+	"content": "Step Function sẽ giúp xây dựng workflow kết nối các Lambda như : Lambda-Transcribe, Lambda-Translate, Lambda-Notify đã tạo ở các bước trước.\nCài đặt Đến trang điều khiển cảu Step Function và Get started.\nChọn các service cần thiết.\nChọn một service cần dùng rồi kéo vào vị trí Drag first state here. Với các service tiếp theo kéo vào và để ở trí bên dưới service trước đó.\nCài đặt chi tiết cho từng service.\nLambda - Transcribe. Chọn đúng Function name khớp với từng lambda service mà bạn đang cài đặt.\nLambda - Translate. Lambda - Notify. Cài đặt time out cho worlflow để tránh khi thời gian chạy vướt quá thời gian cài đặt thì worlflow sẽ thực hiện không thành công các công việc tiếp theo trong step function.\nVới mỗi lần chạy worlflow trong một step function nó tạo ra một Excutions và nếu Excutions bị time out thì có thể thực hiện chạy lại Excutions đó.\nCó bảng liệt kế các Excutions có thông tin liên quan đến Excutions.\nCuối cùng sẽ copy ARN của step function này để thực hiện gọi đến Step Function bằng lambda ở bước tiếp theo.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/",
+	"title": "Tải video lên và gửi thông báo đến service khác khi quá trình tải video lên S3 hoàn tất",
+	"tags": [],
+	"description": "",
+	"content": "Trong bước này, chúng ta sẽ thực hiện tạo Lambda Function sinh Presigned URL để thực hiện việc tải video lên S3. Khi video đã được tải lên S3 sẽ sử dụng SNS để thông báo hoàn thành tải video lên cho các service khác tiếp sau thực hiện công việc của nó.\nNội dung Thiết lập Lambda Function Thiết lập SNS "
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.5-lambda-function-triggers-workflow/",
+	"title": "Tạo Lambda Function kích hoạt Step Function",
+	"tags": [],
+	"description": "",
+	"content": "Ở bước này sẽ tạo một lambda để kích hoạt Step Function.\nTạo function. Điền các thông tin như hình:\nChọn Create function\nDán code sau và chon Deloy:\nimport uuid import boto3 import json step_function_client = boto3.client(\u0026#39;stepfunctions\u0026#39;) def lambda_handler(event, context): execution_name = str(uuid.uuid4()) try: response = step_function_client.start_execution( stateMachineArn=\u0026#39;arn:aws:states:us-east-1:092730711177:stateMachine:MyStateMachine-v47qbhrm7\u0026#39;, name=execution_name, input=json.dumps({\u0026#34;key\u0026#34;: \u0026#34;value\u0026#34;}) ) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Step Function started successfully!\u0026#39;) } except Exception as e: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps(f\u0026#39;Failed to start Step Function: {str(e)}\u0026#39;) } stateMachineArn là giá trị chứ ARN của Step Function đã tạo ở bước trước.\nCài đặt trigger cho lambda là SNS đã tạo.\nChọn thông tin như sau:\nChọn Add\nVậy đã tạo thành công Lambda với trigger là SNS.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/",
+	"title": "Tạo phụ đề, dịch phụ đề và gửi thông báo đến FrontEnd khi hoàn tất",
+	"tags": [],
+	"description": "",
+	"content": "Trong bước này, chúng ta sẽ thực hiện tạo ra các Lambda Function để thực hiện các công việc chính của workshop này.\nLambda Function để khởi tạo Transcribe job Lambda Function để khởi tạo Translate job Lambda Function để thông báo đến FrontEnd khi các việc trên hoàn tất. Tiếp đó sẽ tạo luồng cồn việc từ các lambda Function đã tạo để việc thực thi diễn ra một cách tự động bằng Step Function.\nĐể khích hoạt Step Function thì cần tạo thêm một Lambda Function để gọi đến khích hoạt Step Function khi việc tải video lên S3 hoàn tất.\nNội dung Thiết lập Lambda Function khởi tạo Transcribe job Thiết lập Lambda Function khởi tạo Translate job Thiết lập Lambda Function thông báo đến FrontEnd Thiết lập Step Function Thiết lập Lambda Function khích hoạt Step Function "
+},
+{
+	"uri": "http://localhost:1313/vi/6-test-website/",
+	"title": "Chạy thử trang web",
+	"tags": [],
+	"description": "",
+	"content": "Đầu tiên cần tải video:\nvideo.mp4\nTruy cập đến trang web:\nWebsite\nTải video lên.\nVideo được tải lên S3 thành công.\nTải phụ đề đã được dịch đề gán vào video.\nPhát video đã có phụ đề.\nFile video được lưu trong S3.\nCác file phụ đề.\nFile phụ đề đã được dịch.\n"
+},
+{
+	"uri": "http://localhost:1313/vi/7-clean-up-resources/",
+	"title": "Xoá tài nguyên",
+	"tags": [],
+	"description": "",
+	"content": "Chúng ta sẽ thực hiện các bước để xoá tài nguyên.\nAmazon S3 Xoá file trong Bucket.\nXoá Bucket.\nStep Function SNS Lambda API GateWay "
+},
+{
+	"uri": "http://localhost:1313/vi/categories/",
+	"title": "Categories",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "http://localhost:1313/vi/tags/",
+	"title": "Tags",
+	"tags": [],
+	"description": "",
+	"content": ""
+}]

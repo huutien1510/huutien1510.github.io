@@ -1,0 +1,197 @@
+[
+{
+	"uri": "http://localhost:1313/",
+	"title": "Caption and translate video with AWS Transcribe and AWS Translate",
+	"tags": [],
+	"description": "",
+	"content": "Overview When watching a video in a language that is unfamiliar or unknown to you, you will need subtitles translated into a language you understand. To meet this need, we will use a combination of AWS services to create and translate subtitles for the video. Ultimately, this will result in a video accompanied by subtitles translated into a familiar language, making it easier to watch and understand the content of the video.\nTarget of the Workshop From a video with English language and no subtitles, then after being processed to extract subtitles and translate subtitles into Vietnamese, the end of the process will be a video with complete Vietnamese subtitles.\nLimitations of Worrkshop However, this Workshop still has disadvantages that after doing the Workshop, you will see:\nThe process of uploading videos to S3 is not well optimized, leading to video uploading taking a long time and with videos of long duration, this process takes even longer. The language recognition of the video is limited, only videos in English. Subtitle translation is only from English to Vietnamese. Workshop Development and Improvement Directions Optimize the video upload process. Support subtitles and multilingual subtitle translation. Contents Introduction. Preparation steps. Setup S3. Upload video to S3 and send notification when complete. Generate subtitles, translate and send notifications. Test-website. Clean Up Resources "
+},
+{
+	"uri": "http://localhost:1313/2-preparation/2.1-createiamrole/",
+	"title": "Create IAM ROLE",
+	"tags": [],
+	"description": "",
+	"content": "Create Role Access IAM and create Role\nSelect the service you want to use\nAssign Lambda policy to the role, choose the policy with full Lambda permissions.\nAssign S3 policy to the role, choose the policy with full S3 permissions.\nAssign API GateWay policy to the role, choose the policy with full API GateWay permissions.\nAssign SNS policy to the role.\nAssign the policy of Transcribe to the role.\nAssign the policy of Translate to the role.\nGet the role name Role-ws-2024.\nCheck if the policies of the required services are complete. If so, complete the creation of the Role.\nWhen you want to assign more policies to the created role, select the role to assign the policy to.\nAssign additional policies.\nSelect the Step Function policy.\nCreate Role and assign service policies to completed role.\n"
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.3-lambda-function-send-notification-to-frontend/5.3.1-setup-lambda-function-notify-frontend/",
+	"title": "Create Lambda Notify",
+	"tags": [],
+	"description": "",
+	"content": "Create Lambda Create function.\nEnter the information as shown:\nCreate function\nPaste the following code:\nimport json import http.client def lambda_handler(event, context): api_url = \u0026#34;axwqwuuq1f.execute-api.us-east-1.amazonaws.com\u0026#34; resource = \u0026#34;/dev/notify\u0026#34; payload = json.dumps({\u0026#34;status\u0026#34;: \u0026#34;completed\u0026#34;}) headers = { \u0026#39;Content-Type\u0026#39;: \u0026#39;application/json\u0026#39; } try: conn = http.client.HTTPSConnection(api_url) conn.request(\u0026#34;POST\u0026#34;, resource, payload, headers) response = conn.getresponse() data = response.read() if response.status == 200: return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps({\u0026#39;status\u0026#39;: \u0026#39;completed\u0026#39;, \u0026#39;message\u0026#39;: \u0026#39;Notification sent!\u0026#39;}) } else: return { \u0026#39;statusCode\u0026#39;: response.status, \u0026#39;body\u0026#39;: json.dumps({\u0026#39;status\u0026#39;: \u0026#39;failed\u0026#39;, \u0026#39;message\u0026#39;: \u0026#39;Failed to send notification\u0026#39;}) } except Exception as e: print(f\u0026#34;Error sending notification: {e}\u0026#34;) return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps({\u0026#39;status\u0026#39;: \u0026#39;error\u0026#39;, \u0026#39;message\u0026#39;: \u0026#39;Failed to send notification\u0026#39;}) } Deloy\nDone creating lambda function to generate notification to frontend.\n"
+},
+{
+	"uri": "http://localhost:1313/1-introduce/1.1-flow-explaination/",
+	"title": "Flow explaination",
+	"tags": [],
+	"description": "",
+	"content": "System Flow Explanation In the figure below, this is the architecture and operation flow. First, the user will access the static website saved and hosted in s3. When the user performs the action of uploading a video, it will call the Lambda Function (Upload Video) to upload the video to S3 for storage. There is an object added to S3 completed. SNS sends a notification to other services in the system, here doing Lambda Function (Call Step Function) this triggers the next processing steps automatically. When the Lambda Function (Call Step Function) is activated, the trigger is SNS, it will call the Step Function to perform the workflow from creating subtitles from extracting videos to get subtitles and translating those subtitles. The detailed workflow in Step Function will take place as follows:\nFirst, call Lambda Function (Create job Transcribe), lambda function will perform the task of getting the video that the user has initially uploaded to S3, then proceed to initialize the Transcribe job by configuring TranscriptionJobName, Media (video saved in s3), MediaFormat (video format), LanguageCode (video language), Subtitles (subtitle file format .vtt), OutputBucketName. Next, Trancribe will perform the created job, save the result file to S3. Next, after completing the subtitle creation, the next step is to call Lambda Function (Create job Translate from video subtitles) to perform the task of getting the subtitle file of the newly created video and initialize the job for Translate. Then Translate will perform the created job and save the result file to S3. Finally, when the main tasks are completed, the last Lambda Function will be called to prompt the API Gateway to send a notification that the subtitles are complete so that the fronted side can play the video with the processed subtitles. "
+},
+{
+	"uri": "http://localhost:1313/1-introduce/",
+	"title": "Introduction",
+	"tags": [],
+	"description": "",
+	"content": "AWS Transcribe Amazon Transcribe is a fully managed automatic speech recognition (ASR) service that makes it easy for developers to add speech-to-text capabilities to their applications. It is powered by a next-generation, multi-billion-parameter speech platform model, delivering highly accurate transcriptions for streaming and recorded speech. Thousands of customers across industries use it to automate manual tasks, unlock insights, increase accessibility, and enhance discovery of audio and video content.\nAWS Translate Amazon Translate is a machine translation service that uses neural networks to provide fast, high-quality, customizable language translations.\nAWS Step Function Step Functions is a visual workflow service that helps developers use AWS services to build distributed applications, automate processes, orchestrate microservices, and create data and machine learning (ML) pipelines.\nArchitecture Workshop "
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.1-lambda-function-initializes-transcribe-job/5.1.1-setup-lambda-function-transcribe-job/",
+	"title": "Lambda Transcribe",
+	"tags": [],
+	"description": "",
+	"content": "Create Lambda Create function.\nEnter the information as shown:\nSelect Create function\nPaste the following code:\nimport json import boto3 import time s3 = boto3.client(\u0026#39;s3\u0026#39;) transcribe = boto3.client(\u0026#39;transcribe\u0026#39;) def lambda_handler(event, context): bucket_name = \u0026#39;upload-object-ws-2024\u0026#39; video_key = \u0026#39;Video/video-default.mp4\u0026#39; output_bucket = \u0026#39;ws-file-sub-video\u0026#39; job_name = \u0026#34;subtitle\u0026#34; media_uri = f\u0026#34;s3://{bucket_name}/{video_key}\u0026#34; try: response = s3.list_objects_v2(Bucket=output_bucket) if \u0026#39;Contents\u0026#39; in response: delete_keys = [{\u0026#39;Key\u0026#39;: obj[\u0026#39;Key\u0026#39;]} for obj in response[\u0026#39;Contents\u0026#39;]] s3.delete_objects( Bucket=output_bucket, Delete={ \u0026#39;Objects\u0026#39;: delete_keys, \u0026#39;Quiet\u0026#39;: True } ) except Exception as e: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps(f\u0026#39;Error deleting old files: {str(e)}\u0026#39;) } try: s3.delete_objects(Bucket=\u0026#39;ws-translate\u0026#39;, Delete={\u0026#39;Objects\u0026#39;: [{\u0026#39;Key\u0026#39;: \u0026#39;translated_subtitle.vtt\u0026#39;}]}) except Exception as e: print(f\u0026#34;Error deleting old file: {e}\u0026#34;) response = transcribe.start_transcription_job( TranscriptionJobName=job_name, Media={\u0026#39;MediaFileUri\u0026#39;: media_uri}, MediaFormat=\u0026#39;mp4\u0026#39;, LanguageCode=\u0026#39;en-US\u0026#39;, Subtitles={\u0026#39;Formats\u0026#39;: [\u0026#39;vtt\u0026#39;]}, OutputBucketName=output_bucket ) while True: job = transcribe.get_transcription_job(TranscriptionJobName=job_name) if job[\u0026#39;TranscriptionJob\u0026#39;][\u0026#39;TranscriptionJobStatus\u0026#39;] in [\u0026#39;COMPLETED\u0026#39;, \u0026#39;FAILED\u0026#39;]: break time.sleep(5) if job[\u0026#39;TranscriptionJob\u0026#39;][\u0026#39;TranscriptionJobStatus\u0026#39;] == \u0026#39;COMPLETED\u0026#39;: transcribe.delete_transcription_job(TranscriptionJobName=job_name) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Transcription completed successfully and job deleted!\u0026#39;) } else: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Transcription failed!\u0026#39;) } Finally select Deloy\nDone creating lambda function to create Transcribe job.\n"
+},
+{
+	"uri": "http://localhost:1313/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/4.1-set-up-a-lambda-function-to-create-presigned-urls/4.1.1-create-lambda-function/",
+	"title": "Set Lambda Upload Video",
+	"tags": [],
+	"description": "",
+	"content": "In this step, we will create a lambda to generate the presigned URL.\nCreate Lambda Go to the AWS Lambda Console and select Create function.\nFill in the information as below:\nYou can choose another language if you are not familiar with Python. Choose the arm 64 architecture for more support.\nSelect the previously created role Role-ws-2024.\nCreate function\nAfter creating the function, proceed to code to create the video upload url.\nPaste the following code and press Deloy to deploy the Lambda code.\nimport json import boto3 import os s3 = boto3.client(\u0026#39;s3\u0026#39;) def lambda_handler(event, context): bucket_name = \u0026#39;upload-object-ws-2024\u0026#39; folder_name = \u0026#39;Video\u0026#39; file_name = event.get(\u0026#39;fileName\u0026#39;, \u0026#39;video-default.mp4\u0026#39;) file_type = \u0026#39;video/mp4\u0026#39; s3_key = f\u0026#34;{folder_name}/{file_name}\u0026#34; try: s3.delete_object(Bucket=bucket_name, Key=s3_key) presigned_url = s3.generate_presigned_url(\u0026#39;put_object\u0026#39;, Params={ \u0026#39;Bucket\u0026#39;: bucket_name, \u0026#39;Key\u0026#39;: s3_key, \u0026#39;ContentType\u0026#39;: file_type }, ExpiresIn=300) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps({ \u0026#39;uploadURL\u0026#39;: presigned_url, \u0026#39;message\u0026#39;: \u0026#39;Pre-signed URL generated successfully\u0026#39; }) } except s3.exceptions.NoSuchKey: presigned_url = s3.generate_presigned_url(\u0026#39;put_object\u0026#39;, Params={ \u0026#39;Bucket\u0026#39;: bucket_name, \u0026#39;Key\u0026#39;: s3_key, \u0026#39;ContentType\u0026#39;: file_type }, ExpiresIn=300) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps({ \u0026#39;uploadURL\u0026#39;: presigned_url, \u0026#39;message\u0026#39;: \u0026#39;File not found, pre-signed URL generated successfully\u0026#39; }) } except Exception as e: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps({ \u0026#39;message\u0026#39;: \u0026#39;Error generating pre-signed URL\u0026#39;, \u0026#39;error\u0026#39;: str(e) }) } Create a function url, here you can replace it with an API for the frontend to call. For this workshop, we will use the function url for the frontend to call.\nYou can learn more about Function URLs: Creating and managing Lambda function URLs\nChoose NONE so that Lambda will not perform IAM authentication for requests to your function URL. The URL endpoint will be public unless you implement your own authorization logic in your function.\nSelecting BUFFERED will limit the upload file size to 6MB\nSelect Save\nOnce you have the Lambda url, the frontend can call the lambda to get the presigned URL and proceed with the upload.\nWith Lambda, when uploading videos, time out may occur. Therefore, reset the time out for lambda.\n3s is the default time out for Lambda and 15m is the maximum time out that can be set for lambda. In addition, the default Memory is 128MB and the default Storage is 512MB. You can set the memory and storage.\nSet the time out.\nSelect Save\nUsing Lambda is suitable for light work that is not too heavy because it will easily lead to timeout due to the timeout time of Lambda Function being limited to 15 minutes. Therefore, if you use it, you need to optimize it to suit Lambda Function.\n"
+},
+{
+	"uri": "http://localhost:1313/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/4.1-set-up-a-lambda-function-to-create-presigned-urls/",
+	"title": "Set Up lambda",
+	"tags": [],
+	"description": "",
+	"content": "To upload videos to s3, in this workshop we will use Lambda to upload videos to S3 using presigned URLs.\nA presigned URL is a URL that you can provide to your users to grant temporary access to a specific S3 object. Using the URL, users can read and write objects (or update existing objects). The URL contains specific parameters set by the application you install. Presigned URLs use three parameters to limit access to users:\nBucket: Contains objects - where the object is located.\nKey: The name of the object.\nExpires: the duration of the URL.\nUse Lambda to create a Presigned URL. And we use a single file to upload, so the challenge limit will be 5GB\nAlternatively, you can upload videos faster by using multiupload combined with presigned URLs. Then the uploaded video will be split into smaller parts for uploading.\nContent: Create Lambda Function "
+},
+{
+	"uri": "http://localhost:1313/3-setup-s3/3.1-setup-s3-static-web/",
+	"title": "Setup S3 Static website",
+	"tags": [],
+	"description": "",
+	"content": "Create S3 Bucket Go to the S3 dashboard and create a new Bucket named web-translate-ws-2024\nSelect ACLs enable and check Object write to make objects in the bucket public.\nUncheck Block all public access, check I acknowledge that the current settings might result in this bucket and the objects within becoming public. to allow other sources to access S3\nSelect Create bucket\nNext, configure the policy for S3. Select the newly created Bucket and go to Premissions.\nGo to Bucket policy to configure the Bucket policy.\nConfigure the policy for the bucket using the Policy generator feature.\nAWS Policy Generator is a tool that lets you create policies that control access to Amazon Web Services (AWS) products and resources.\nBefore selecting Policy generator, you need to copy Bucket ARN\nTo create a policy for the bucket, in Step 1, select S3 Bucket Policy, in addition, you can create policies for SQS, VPC, IAM and SNS depending on the type of server that you need to perform.\nIn Step 2 - Principal, we set the value to * to allow all sources to access the bucket.\nCheck that you have selected all the actions that can be performed with this bucket, the correct bucket arn.\nAfter selecting Generate Policy, you will get the json policy code and copy this code.\nPaste the newly generated code into Policy.\nAt the end of the Resource line, add /* to allow access to objects in the bucket.\nSelect Save changes\nUpload the website code file to the bucket, select upload and select the file to upload and finally click Upload.\nDownload 2 code files:\nindex.html\nvideo-player.html\nCreate static website hosting in Properties then go to Static website hosting.\nConfigure static website hosting.\nIn the Index document section, enter the file name you want to display first, or maybe as the homepage. Leave the same name as the file uploaded to the Bucket. Error document if you code a file to display website errors, you can upload it and leave the name of that file, here because there is no file to display errors in the interface, you can leave the file name as Index document.\nSelect Save changes\nThat\u0026rsquo;s it and there will be a link to the website.\n"
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.1-lambda-function-initializes-transcribe-job/",
+	"title": "Transcribe",
+	"tags": [],
+	"description": "",
+	"content": "S Using Lambda Function to create Transcribe job with AWS Transcribe will provide two sub file formats for video, SRT and VTT (WebVTT). For this workshop, we will use VTT format.\nVTT is the following format:\n00:00:00.469 \u0026ndash;\u0026gt; 00:00:02.880 The BMW crew is the world leading\nAlso use Lambda Function to delete the Transcribe job when it is done.\nContent: Create Lambda Function "
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.3-lambda-function-send-notification-to-frontend/5.3.2-setup-api-gateway/",
+	"title": "Create API Gateway",
+	"tags": [],
+	"description": "",
+	"content": "Go to the API gateway control page and select create API\nUse Rest API (public).\nGet the following information:\nCreate resource.\n/ is the root directory where resources will be created.\nEnter Resource name notify.\nCreate Method.\nSelect the correct Lambda to perform notification to the frontend.\nEnable CORS.\nSelect the resource that has the newly created method to enable CORS.\nSelect the value fields.\nDeploy the API with an optional name: dev.\nGet the API url.\nWith this Url, paste it into the api_url value section in the Lambda-Notify code. And at the same time provide the API to the frontend.\n"
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.2-lambda-function-initializes-translate-job/5.2.1-setup-lambda-function-translate-job/",
+	"title": "Lambda Translate",
+	"tags": [],
+	"description": "",
+	"content": "Create Lambda Create function.\nEnter the information as shown:\nSelect Create function\nPaste the following code:\nimport json import boto3 s3_client = boto3.client(\u0026#39;s3\u0026#39;) translate_client = boto3.client(\u0026#39;translate\u0026#39;) def lambda_handler(event, context): source_bucket = \u0026#39;ws-file-sub-video\u0026#39; source_key = \u0026#39;subtitle.vtt\u0026#39; destination_bucket = \u0026#39;ws-translate\u0026#39; destination_key = \u0026#39;translated_subtitle.vtt\u0026#39; vtt_file = s3_client.get_object(Bucket=source_bucket, Key=source_key) vtt_content = vtt_file[\u0026#39;Body\u0026#39;].read().decode(\u0026#39;utf-8\u0026#39;) txt_content = convert_vtt_to_txt(vtt_content) translated_text = translate_text(txt_content, \u0026#39;en\u0026#39;, \u0026#39;vi\u0026#39;) s3_client.put_object( Bucket=destination_bucket, Key=destination_key, Body=translated_text ) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Translation complete and uploaded to S3!\u0026#39;) } def convert_vtt_to_txt(vtt_content): lines = vtt_content.splitlines() txt_content = [] for line in lines: txt_content.append(line.strip()) return \u0026#39;\\n\u0026#39;.join(txt_content) def translate_text(text, source_lang, target_lang): response = translate_client.translate_text( Text=text, SourceLanguageCode=source_lang, TargetLanguageCode=target_lang ) return response[\u0026#39;TranslatedText\u0026#39;] Finally select Deloy\nDone creating lambda function to create Translate job.\n"
+},
+{
+	"uri": "http://localhost:1313/2-preparation/",
+	"title": "Preparation",
+	"tags": [],
+	"description": "",
+	"content": "First need to create IAM Role.\nYou need to create 1 Linux instance on the public subnet and 1 Window instance on the private subnet to perform this lab.\nIAM Role is a feature that enhances security on AWS. An IAM Role can be temporarily assigned to IAM Users and AWS resources within (internal) or outside (external) your account.\nContent Create IAM Role "
+},
+{
+	"uri": "http://localhost:1313/3-setup-s3/3.2-setup-s3-store-video-file/",
+	"title": "Set up S3 to save video files",
+	"tags": [],
+	"description": "",
+	"content": "Create Bucket Create a Bucket to save files, the first steps are similar to Create a Bucket to save web code files, however, Static website hosting will not be configured.\nTo manage Video files more neatly, we will create a folder in the bucket.\nCreate folder with name Video\nSelect Create folder\nSince the objects of this bucket will be accessed through lambda and api, additional CORS configuration is required.\nCross-origin resource sharing (CORS) defines how client web applications loaded in one domain interact with resources in another domain. CORS\nPaste the following code:\n[ { \u0026#34;AllowedHeaders\u0026#34;: [ \u0026#34;*\u0026#34; ], \u0026#34;AllowedMethods\u0026#34;: [ \u0026#34;PUT\u0026#34;, \u0026#34;GET\u0026#34;, \u0026#34;DELETE\u0026#34; ], \u0026#34;AllowedOrigins\u0026#34;: [ \u0026#34;*\u0026#34; ], \u0026#34;ExposeHeaders\u0026#34;: [ \u0026#34;ETag\u0026#34; ] } ] \u0026ldquo;AllowedHeaders\u0026rdquo;: [ \u0026ldquo;\u0026rdquo; ]* is a list of HTTP headers that the browser can send in a request from other sources (cross-origin request). The * allows all HTTP headers\n\u0026ldquo;AllowedMethods\u0026rdquo;: [\u0026ldquo;PUT\u0026rdquo;, \u0026ldquo;GET\u0026rdquo;, \u0026ldquo;DELETE\u0026rdquo;] is a list of HTTP methods that are allowed when making requests to S3 from other sources.\n\u0026ldquo;AllowedOrigins\u0026rdquo;: [ \u0026ldquo;\u0026rdquo; ]* is a list of origins that are allowed to access the S3 bucket. The * means that all origins are allowed, which means that all websites from any domain are allowed to make requests to the S3 bucket.\n\u0026ldquo;ExposeHeaders\u0026rdquo;: [\u0026ldquo;ETag\u0026rdquo;] is a list of HTTP headers that the browser can access from the S3 response. ETag is an HTTP header that tells the browser the version of a file, often used to identify changes to a resource.\nFinally select Save changes\n"
+},
+{
+	"uri": "http://localhost:1313/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/4.2-setup-sns/",
+	"title": "Setup SNS",
+	"tags": [],
+	"description": "",
+	"content": "With SNS used to send notifications when a new video is uploaded to S3. SNS broadcasts notifications to other services in the system (in wrkshop, lambda), ensuring that all relevant components are notified of the new event. This triggers the video processing process automatically and promptly.\nCreate SNS Go to the Amazon SNS Console and enter the topic name video-procesing-topic, then select Next step.\nSelect Standard, then select Create topic.\nGo to the newly created SNS and select edit\nPolicy settings Add a comma after the enclosed curly brackets to add another policy code.\nPaste the following code:\n{ \u0026#34;Sid\u0026#34;: \u0026#34;S3 notification to SNS\u0026#34;, \u0026#34;Effect\u0026#34;: \u0026#34;Allow\u0026#34;, \u0026#34;Principal\u0026#34;: { \u0026#34;Service\u0026#34;: \u0026#34;s3.amazonaws.com\u0026#34; }, \u0026#34;Action\u0026#34;: \u0026#34;sns:Publish\u0026#34;, \u0026#34;Resource\u0026#34;: \u0026#34;\u0026lt;ARN of the Topic\u0026gt;\u0026#34;, \u0026#34;Condition\u0026#34;: { \u0026#34;ArnLike\u0026#34;: { \u0026#34;AWS:SourceArn\u0026#34;: \u0026#34;\u0026lt;ARN of the S3 Bucket\u0026gt;\u0026#34; } } } ARN of the Topic is replaced with the ARN of the SNS currently configured.\nARN of the S3 Bucket is replaced with the ARN of the input bucket, which is the bucket containing the uploaded video file.\nSelect Save changes\nIn order for SNS to know that an object is saved to the bucket, additional settings must be made in the input bucket.\nGo to the input bucket upload-object-ws-2024. Select Properties.\nFill in the information as follows:\nFinally select Save changes\n"
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.2-lambda-function-initializes-translate-job/",
+	"title": "Translate",
+	"tags": [],
+	"description": "",
+	"content": "Use Lambda to call AWS Translate to translate subtitles taken from the ws-file-sub-video bucket.\nAnd AWS Translate translates files up to 20MB in text (.txt), HTML (.html), Word (.docx), Excel (.xlsx), PowerPoint (.pptx) and XLIFF 1.2 (.xlf) formats and supports up to 1,000,000 files at a time. Amazon Translate provides output content as files. The file format for each output file matches the input file format.\nHowever, when using it as a subtitle for a video, you can use lambda to convert the output file format of Amazon Translate to .vtt format while also converting the subtitle file format from .vtt to .txt to match the input format of Amazon Translate.\nThis workshop will translate from English to Vietnamese.\nContents: Create Lambda Function "
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.3-lambda-function-send-notification-to-frontend/",
+	"title": "Notify to frontend",
+	"tags": [],
+	"description": "",
+	"content": "When the work is completed, the backend will send a notification to the frontend so that the fronted can perform the next work. Use a combination of API Gateway and Lambda to perform this task.\nContents: Lambda Notify\nSetup API Gateway\n"
+},
+{
+	"uri": "http://localhost:1313/3-setup-s3/3.3-setup-s3-store-sub-file/",
+	"title": "Set S3 to save video subtitle files",
+	"tags": [],
+	"description": "",
+	"content": "Create bucket Create a bucket to store caption files generated from AWS Transcribe\nConfigure Policy bucket\nCORS Configuration\n"
+},
+{
+	"uri": "http://localhost:1313/3-setup-s3/",
+	"title": "Setup S3",
+	"tags": [],
+	"description": "",
+	"content": "In this step, we will install s3 to host files and code, and install a static web server to host in S3\nContents Install S3 to host website code and host static website Install S3 video upload Install S3 backup for video subfiles Install S3 translated subtitles "
+},
+{
+	"uri": "http://localhost:1313/3-setup-s3/3.4-setup-s3-store-sub-trans-file/",
+	"title": "Set S3 to save translated subtitle files",
+	"tags": [],
+	"description": "",
+	"content": "Create bucket Create a bucket to store translated subtitle files from AWS Translate\nConfiguration Policy bucket\nCORS Configuration\n"
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.4-assemble-the-components-of-a-workflow-with-step-function/",
+	"title": "Setup Step Function",
+	"tags": [],
+	"description": "",
+	"content": "Step Function will help build a workflow connecting Lambda such as: Lambda-Transcribe, Lambda-Translate, Lambda-Notify created in the previous steps.\nInstallation Go to the Step Function control page and Get started.\nSelect the necessary services.\nSelect a service to use and drag it to the Drag first state here position. For the next services, drag it in and place it below the previous service.\nDetailed settings for each service.\nLambda - Transcribe. Select the correct Function name that matches each lambda service you are installing.\nLambda - Translate. Lambda - Notify. Set time out for worlflow to avoid when the running time exceeds the set time, worlflow will not successfully perform the next tasks in the step function.\nEach time running worlflow in a step function, it creates an Excutions and if the Execution times out, it can be re-run.\nThere is a table listing the Executions with information related to the Executions.\nFinally, copy the ARN of this step function to call the Step Function using lambda in the next step.\n"
+},
+{
+	"uri": "http://localhost:1313/4-upload-video-and-send-notification-to-other-server-when-video-upload-to-s3-is-complete/",
+	"title": "Upload-video-and-send-notification-to-other-service-when-video-upload-to-S3-is-complete",
+	"tags": [],
+	"description": "",
+	"content": "In this step, we will create a Lambda Function to generate a Presigned URL to upload the video to S3. Once the video has been uploaded to S3, it will use SNS to notify the completion of the video upload for other services to continue to perform their work.\nContents Set up Lambda Function Setup SNS "
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/5.5-lambda-function-triggers-workflow/",
+	"title": "Create a Lambda Function that triggers a Step Function",
+	"tags": [],
+	"description": "",
+	"content": "In this step, we will create a lambda to trigger the Step Function.\nCreate function. Fill in the information as shown:\nSelect Create function\nPaste the following code and select Deloy:\nimport uuid import boto3 import json step_function_client = boto3.client(\u0026#39;stepfunctions\u0026#39;) def lambda_handler(event, context): execution_name = str(uuid.uuid4()) try: response = step_function_client.start_execution( stateMachineArn=\u0026#39;arn:aws:states:us-east-1:092730711177:stateMachine:MyStateMachine-v47qbhrm7\u0026#39;, name=execution_name, input=json.dumps({\u0026#34;key\u0026#34;: \u0026#34;value\u0026#34;}) ) return { \u0026#39;statusCode\u0026#39;: 200, \u0026#39;body\u0026#39;: json.dumps(\u0026#39;Step Function started successfully!\u0026#39;) } except Exception as e: return { \u0026#39;statusCode\u0026#39;: 500, \u0026#39;body\u0026#39;: json.dumps(f\u0026#39;Failed to start Step Function: {str(e)}\u0026#39;) } stateMachineArn is the value of the ARN of the Step Function created in the previous step.\nSet the trigger for the lambda to be the created SNS.\nSelect the information as follows:\nSelect Add\nSo the Lambda has been successfully created with the trigger being SNS.\n"
+},
+{
+	"uri": "http://localhost:1313/5-generate-subtitles-translate-subtitles-and-send-notification-to-frontend-when-done/",
+	"title": "Generate subtitles translate subtitles and send notification to user interface when done",
+	"tags": [],
+	"description": "",
+	"content": "In this step, we will create Lambda Functions to perform the main tasks of this workshop.\nLambda Function to initialize Transcribe job Lambda Function to initialize Translate job Lambda Function to notify FrontEnd when the above tasks are completed. Next, we will create a workflow from the created Lambda Functions so that the execution takes place automatically using Step Function.\nTo activate Step Function, we need to create another Lambda Function to call to activate Step Function when uploading video to S3 is complete.\nContents Set up Lambda Function to initialize Transcribe job Set up Lambda Function to initialize Translate job Set up Lambda Function to notify to FrontEnd Set up Step Function Set up a Lambda Function that triggers Step Function operations "
+},
+{
+	"uri": "http://localhost:1313/6-test-website/",
+	"title": "Test website",
+	"tags": [],
+	"description": "",
+	"content": "First, you need to upload the video:\nvideo.mp4\nGo to the website:\nWebsite\nUpload the video.\nThe video is successfully uploaded to S3.\nUpload the translated subtitles to the video.\nPlay the video with subtitles.\nThe video file is saved in S3.\nSubtitle files.\nSubtitle files have been translated.\n"
+},
+{
+	"uri": "http://localhost:1313/7-clean-up-resources/",
+	"title": "Clean up resources",
+	"tags": [],
+	"description": "",
+	"content": "We will go through the steps to delete the resource.\nAmazon S3 Delete the file in the Bucket.\nDelete the Bucket.\nStep Function SNS Lambda API GateWay "
+},
+{
+	"uri": "http://localhost:1313/categories/",
+	"title": "Categories",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "http://localhost:1313/tags/",
+	"title": "Tags",
+	"tags": [],
+	"description": "",
+	"content": ""
+}]
