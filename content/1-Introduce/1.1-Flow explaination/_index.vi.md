@@ -13,4 +13,4 @@ Trong hình bên dưới, đây là kiến trúc và luồng vận hành. Đầu
 - Tiếp theo sau khi đã hoàn thành việc tạo phụ đề thì bước kế tiếp là gọi đến Lambda Function(Create job Translate from video subtitles) để thực hiện lấy file phụ đề của video vừa được tạo và khởi tạo công việc cho Translate. Sau đó Translate sẽ thực hiện công việc được tạo và lưu file kết quả vào S3.
 - Cuối cùng khi các công việc chính đã hoàn thành thì sẽ gọi Lambda Function cuối cùng để gợi API Gateway để gửi thông báo đã hoàn thành xong phụ đề để phía fronted thực hiện phát video có kèm phụ đã được xử lý.
 
-![architec](/static/images/1.Introduce/architec.png)
+![s1](/images/1.Introduce/architec.png)

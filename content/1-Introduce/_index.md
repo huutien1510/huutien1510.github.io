@@ -16,4 +16,4 @@ pre : " <b> 1. </b> "
 **Step Functions** is a visual workflow service that helps developers use AWS services to build distributed applications, automate processes, orchestrate microservices, and create data and machine learning (ML) pipelines.
 
 ## Architecture Workshop
-![architec](/static/images/1.Introduce/architec.png)
+![s1](/images/1.Introduce/architec.png)

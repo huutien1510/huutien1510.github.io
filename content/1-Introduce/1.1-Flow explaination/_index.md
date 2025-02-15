@@ -12,4 +12,4 @@ In the figure below, this is the architecture and operation flow. First, the use
 - Next, after completing the subtitle creation, the next step is to call Lambda Function (Create job Translate from video subtitles) to perform the task of getting the subtitle file of the newly created video and initialize the job for Translate. Then Translate will perform the created job and save the result file to S3.
 - Finally, when the main tasks are completed, the last Lambda Function will be called to prompt the API Gateway to send a notification that the subtitles are complete so that the fronted side can play the video with the processed subtitles.
 
-![architec](/static/images/1.Introduce/architec.png)
+![s1](/images/1.Introduce/architec.png)
