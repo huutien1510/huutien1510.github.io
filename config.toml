@@ -1,5 +1,5 @@
 # Change the default theme to be use when building the site with Hugo
-baseURL = "https://NguyenNhatTruong03.github.io/"
+baseURL = "https://huutien1510.github.io/"
 theme = "hugo-theme-learn"
 
 # For search functionality
@@ -10,9 +10,9 @@ home = [ "HTML", "RSS", "JSON"]
   # Change default color scheme with a variant one. Can be "red", "blue", "green".
   themeVariant = "workshop"
   # Git hub repo link
-  editURL = "https://NguyenNhatTruong03.github.io/"
+  editURL = "https://huutien1510.github.io/"
   description = ""
-  author = "truongninja3@gmail.com"
+  author = "huutien1510@gmail.com"
   showVisitedLinks = true
   disableBreadcrumb = false
   disableNextPrev = false
