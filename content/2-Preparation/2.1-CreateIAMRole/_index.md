@@ -40,7 +40,7 @@ Assign the policy of **Translate** to the role.
 
 ![Preparation](/images/2.prerequisite/n8.png)
 
-Get the role name **`Role-ws-2024`**.
+Get the role name **`WorkshopFCJ`**.
 
 ![Preparation](/images/2.prerequisite/n9.png)
 

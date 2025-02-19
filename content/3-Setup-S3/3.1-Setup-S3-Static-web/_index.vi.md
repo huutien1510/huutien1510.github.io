@@ -8,7 +8,7 @@ pre : " <b> 3.1 </b> "
 
 ## Tạo Bucket S3
 
-Truy cập đến bảng điều khiển S3 và tạo Bucket mới tên **`web-translate-ws-2024`**
+Truy cập đến bảng điều khiển S3 và tạo Bucket mới tên **`web-trans-workshop-fcj`**
 
 ![Sep-Up-S3](/images/3.setupS3/3.1.ima/n1.png)
 

@@ -40,7 +40,7 @@ Gán policy của **Translate** cho role.
 
 ![Preparation](/images/2.prerequisite/n8.png)
 
-Nhận tên role **`Role-ws-2024`**.
+Nhận tên role **`WorkshopFCJ`**.
 
 ![Preparation](/images/2.prerequisite/n9.png)
 

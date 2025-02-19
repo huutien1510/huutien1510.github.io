@@ -8,7 +8,7 @@ pre : " <b> 3.1 </b> "
 
 ## Create S3 Bucket
 
-Go to the S3 dashboard and create a new Bucket named **`web-translate-ws-2024`**
+Go to the S3 dashboard and create a new Bucket named **`web-trans-workshop-fcj`**
 
 ![Sep-Up-S3](/static/images/3.setupS3/3.1.ima/n1.png)
 
