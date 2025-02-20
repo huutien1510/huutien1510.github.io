@@ -61,7 +61,7 @@ Chọn **Save change**
 
 Để SNS có thể biết có một object được lưu vào bucket thì sẽ phải cài đặt thêm ở bucket đầu vào.
 
-Đến bucket đầu vào **upload-object-ws-2024**. Chọn **Properties**.
+Đến bucket đầu vào **upload-video-workshop-fcj**. Chọn **Properties**.
 
 ![Upload](/images/9.sns/n6.png)
 

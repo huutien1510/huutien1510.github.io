@@ -62,7 +62,7 @@ Select **Save changes**
 
 In order for SNS to know that an object is saved to the bucket, additional settings must be made in the input bucket.
 
-Go to the input bucket **upload-object-ws-2024**. Select **Properties**.
+Go to the input bucket **upload-video-workshop-fcj**. Select **Properties**.
 
 ![Upload](/images/9.sns/n6.png)
 
