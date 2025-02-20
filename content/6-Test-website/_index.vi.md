@@ -12,7 +12,7 @@ pre : " <b> 6. </b> "
 
 Truy cập đến trang web:
 
-[Website](http://web-translate-ws-2024.s3-website-us-east-1.amazonaws.com)
+[Website](http://web-trans-workshop-fcj.s3-website-us-east-1.amazonaws.com)
 
 ![Upload](/images/11.testwebsite/n.png)
 
