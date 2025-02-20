@@ -8,7 +8,7 @@ pre : " <b> 3.1 </b> "
 
 ## Create S3 Bucket
 
-Go to the S3 dashboard and create a new Bucket named **`web-trans-workshop-fcj`**
+Go to the S3 dashboard and create a new Bucket named **`WebTransWorkShopFCJ`**
 
 ![Sep-Up-S3](/static/images/3.setupS3/3.1.ima/n1.png)
 
@@ -78,7 +78,7 @@ Download 2 code files:
 
 Create static website hosting in **Properties** then go to **Static website hosting**.
 
-![Sep-Up-S3](/images/3.setupS3/3.1.ima/n15.png)
+![Sep-Up-S3](/images/3.setupS3/3.1.ima/n12.png)
 
 Configure static website hosting.
 

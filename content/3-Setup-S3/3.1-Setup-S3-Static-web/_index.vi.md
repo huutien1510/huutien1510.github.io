@@ -8,7 +8,7 @@ pre : " <b> 3.1 </b> "
 
 ## Tạo Bucket S3
 
-Truy cập đến bảng điều khiển S3 và tạo Bucket mới tên **`web-trans-workshop-fcj`**
+Truy cập đến bảng điều khiển S3 và tạo Bucket mới tên **`WebTransWorkShopFCJ`**
 
 ![Sep-Up-S3](/images/3.setupS3/3.1.ima/n1.png)
 
@@ -78,7 +78,7 @@ Tải 2 file code:
 
 Tạo static website hosting vào **Properties** sau đó đến **Static website hosting**.
 
-![Sep-Up-S3](/images/3.setupS3/3.1.ima/n15.png)
+![Sep-Up-S3](/images/3.setupS3/3.1.ima/n12.png)
 
 Cấu hình static website hosting.
 
