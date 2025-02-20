@@ -23,7 +23,7 @@ Truy cập Bảng điều khiển AWS Lambda và chọn Tạo function.
 Bạn có thế chọn ngôn ngữ khác nếu không quen với Python. Chọn kiến trúc arm 64 để được các nhiều hổ trợ hơn.
 {{% /notice %}}
 
-Chọn role đã tạo ở trước đó **``Role-ws-2024``**.
+Chọn role đã tạo ở trước đó **``WorkshopFCJ``**.
 
 ![Upload](/images/4.uploadvideo/n2.png)
 
