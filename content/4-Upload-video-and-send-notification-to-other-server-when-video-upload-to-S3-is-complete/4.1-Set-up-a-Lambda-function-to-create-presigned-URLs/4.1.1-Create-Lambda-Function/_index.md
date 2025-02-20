@@ -24,7 +24,7 @@ You can choose another language if you are not familiar with Python. Choose the 
 
 {{% /notice %}}
 
-Select the previously created role **``Role-ws-2024``**.
+Select the previously created role **``WorkshopFCJ``**.
 
 ![Upload](/images/4.uploadvideo/n2.png)
 
